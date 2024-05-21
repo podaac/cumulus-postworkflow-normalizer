@@ -266,6 +266,13 @@ jobs:
       # Publish release to releases
       #########################################################################
       - name: Create Zip release
+        if: |
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/main'    ||
+          startsWith(github.ref, 'refs/heads/release') ||
+          github.event.head_commit.message == '/deploy sit' ||
+          github.event.head_commit.message == '/deploy uat' ||
+          github.event.head_commit.message == '/deploy sandbox'      
         run: |
           poetry run pip install -t package dist/*.whl
           cd package/; zip -r ../terraform/postworkflow-normalizer.zip . -x '*.pyc'
