@@ -1,7 +1,7 @@
 import pytest
 import unittest
 import boto3
-from moto import mock_s3
+from moto import mock_aws
 
 null = None
 false = False
@@ -421,7 +421,7 @@ event = {
 }
 
 
-@mock_s3
+@mock_aws
 class TestPostworkflowNormalizer(unittest.TestCase):
 
     def setup_method(self, method):

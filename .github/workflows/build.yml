@@ -188,6 +188,7 @@ jobs:
         run: |
           pip install pylint
           pip install pytest
+          poetry build
           poetry install
 
       # This is where tests go
@@ -220,14 +221,6 @@ jobs:
             --project-name=${{ github.repository }}
 
       ## TODO: Find out where the test report goes
-
-      #########################################################################
-      # Build
-      #########################################################################
-      - name: Install Software
-        run: |
-          poetry build
-
 
       #########################################################################
       # Publish new version numbers
