@@ -180,7 +180,7 @@ jobs:
           poetry version ${{ env.the_version }}
 
       #########################################################################
-      # Install
+      # Install & Test & Snyk
       #########################################################################
       # NOTE: This step is platform-specific
       # These are gradle-specific steps for installing the application
@@ -197,8 +197,30 @@ jobs:
           poetry run flake8 cumulus_postworkflow_normalizer
           poetry run pytest --junitxml=build/reports/pytest.xml --cov=podaac/ --cov-report=html -m "not aws and not integration" tests/
 
-      ## TODO: Find out where the test report goes
 
+      - name: Run Snyk as a blocking step
+        uses: snyk/actions/python-3.11@master
+        env:
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          args: >
+              --org=${{ secrets.SNYK_ORG_ID }}
+              --project-name=${{ github.repository }}
+              --severity-threshold=high
+              --fail-on=all
+
+      - name: Run Snyk on Python
+        uses: snyk/actions/python-3.10@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor
+          args: >
+            --org=${{ secrets.SNYK_ORG_ID }}
+            --project-name=${{ github.repository }}
+
+      ## TODO: Find out where the test report goes
 
       #########################################################################
       # Build
