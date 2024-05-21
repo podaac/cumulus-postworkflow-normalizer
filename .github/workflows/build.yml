@@ -193,8 +193,8 @@ jobs:
       # This is where tests go
       - name: Run Poetry Tests
         run: |
-          poetry run pylint podaac
-          poetry run flake8 podaac
+          poetry run pylint cumulus_postworkflow_normalizer
+          poetry run flake8 cumulus_postworkflow_normalizer
           poetry run pytest --junitxml=build/reports/pytest.xml --cov=podaac/ --cov-report=html -m "not aws and not integration" tests/
 
       ## TODO: Find out where the test report goes
