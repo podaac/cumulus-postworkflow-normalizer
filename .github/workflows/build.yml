@@ -211,7 +211,7 @@ jobs:
               --fail-on=all
 
       - name: Run Snyk on Python
-        uses: snyk/actions/python-3.10@master
+        uses: snyk/actions/python-3.11@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
