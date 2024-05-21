@@ -197,9 +197,8 @@ jobs:
           poetry run flake8 cumulus_postworkflow_normalizer
           poetry run pytest --junitxml=build/reports/pytest.xml --cov=podaac/ --cov-report=html -m "not aws and not integration" tests/
 
-
       - name: Run Snyk as a blocking step
-        uses: snyk/actions/python-3.11@master
+        uses: snyk/actions/python@master
         env:
             SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -211,7 +210,7 @@ jobs:
               --fail-on=all
 
       - name: Run Snyk on Python
-        uses: snyk/actions/python-3.11@master
+        uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
