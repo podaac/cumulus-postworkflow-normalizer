@@ -1,4 +1,4 @@
-# pylint: disable=R0022, R0912, R1702
+# pylint: disable=R0022, R0912, R1702, R0914
 
 """lambda function used to nomalize postworkflow messages in aws lambda with cumulus"""
 
@@ -74,31 +74,30 @@ class PostworkflowNormalizer(Process):
         lambda_ephemeral_storage = self.config.get('lambda_ephemeral_storage', 536870912)
         # 50 mb smaller so we don't use up all temp space
         smaller_ephemeral_storage = lambda_ephemeral_storage - 52428800
-        data_regex = []
-
-        for collection_file in collection_files:
-            if collection_file.get('type') == 'data':
-                data_regex.append(collection_file.get('regex'))
-
+        data_regex = [file.get('regex') for file in collection_files if file.get('type') == 'data']
         max_data_file_size = 0
-        for granule in self.input.get('granules'):
 
+        for granule in self.input.get('granules', []):
             new_files = []
 
-            for file in granule.get('files'):
+            for file in granule.get('files', []):
                 file_name = file.get('fileName')
-                if not file_name.endswith(extension_exclude_list):
-                    if file.get('type') == 'data':
-                        if self.check_file_exists(file.get('bucket'), file.get('key')):
-                            new_files.append(file)
-                            max_data_file_size = max(max_data_file_size, file.get('size', 0))
-                    else:
-                        for regex in data_regex:
-                            match = re.search(regex, file_name)
-                            if match:
-                                file['type'] = 'data'
-                                new_files.append(file)
-                                max_data_file_size = max(max_data_file_size, file.get('size', 0))
+                file_type = file.get('type')
+                file_size = file.get('size', 0)
+                bucket = file.get('bucket')
+                key = file.get('key')
+
+                # Skip files with excluded extensions
+                if file_name.endswith(extension_exclude_list):
+                    continue
+
+                # Check if file is of type 'data' or matches any regex pattern
+                if file_type == 'data' or any(re.search(regex, file_name) for regex in data_regex):
+                    if file_type != 'data':
+                        file['type'] = 'data'
+                    if self.check_file_exists(bucket, key):
+                        new_files.append(file)
+                        max_data_file_size = max(max_data_file_size, file_size)
 
             if len(new_files) == 0:
                 raise ValueError('There are 0 identified data files')
@@ -147,11 +146,10 @@ def handler(event, context):
     cumulus_logger.setMetadata(event, context)
     result = PostworkflowNormalizer.cumulus_handler(event, context=context)
 
-    # modify workflow
-    result['meta']['collection']['meta']['workflowChoice'].update(
-        {'ecs_lambda': result['payload']['ecs_lambda']}
-    )
-    del result['payload']['ecs_lambda']
+    ecs_lambda = result['payload'].pop('ecs_lambda', None)
+    if ecs_lambda is not None:
+        result['meta']['collection']['meta']['workflowChoice']['ecs_lambda'] = ecs_lambda
+
     return result
 
 
