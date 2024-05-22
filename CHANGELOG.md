@@ -7,17 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- ** DMRPP Updates **
- - updated to python 3.11
- - poetry update python libraries
- - update normalizer to add a workflow flag to use ecs or lambda based on a granule size
- - added a config argument for what the lambda ephemeral storage limit will be, we will use that and subract
-   50 mb so we don't use the entire /tmp on lambdas.
- - update normalizer to use arm architecture
 ### Changed
 ### Deprecated
 ### Removed
-### Fixedå
+### Fixed
+### Security
+
+
+## [0.4.0]
+
+### Added
+- ** DMRPP Updates **
+  - Added a workflow flag to use ecs or lambda based on a granule size
+  - Added a config argument for what the lambda ephemeral storage limit will be, 
+    we will use that and subract 50 mb so we don't use the entire /tmp on lambdas.
+- Updated to python 3.11
+- Did 'poetry update' to update python libraries
+- Updated to use arm architecture
+### Changed
+- ** Moved to Github.com **
+  - [cumulus-postworkflow-normalizer](https://github.com/podaac/cumulus-postworkflow-normalizer)
+### Deprecated
+### Removed
+### Fixed
 ### Security
 
 
