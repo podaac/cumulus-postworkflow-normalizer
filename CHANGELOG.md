@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [0.4.1]
+
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+- Updated dependency versions
+
+
 ## [0.4.0]
 
 ### Added
