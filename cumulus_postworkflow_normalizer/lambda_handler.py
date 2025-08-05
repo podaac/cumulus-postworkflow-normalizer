@@ -2,6 +2,7 @@
 
 """lambda function used to nomalize postworkflow messages in aws lambda with cumulus"""
 
+import fnmatch
 import logging
 import os
 import re
@@ -39,6 +40,127 @@ class PostworkflowNormalizer(Process):
         super().__init__(*args, **kwargs)
         self.logger = cumulus_logger
 
+    def _get_role_for_bucket(self, bucket_name):
+        """Get the appropriate role to assume for a given bucket.
+
+        The role mappings should be configured in self.config['role_mappings'] as:
+        {
+            "exact-bucket-name": "arn:aws:iam::123456789012:role/MyRole",
+            "bucket-prefix-*": "arn:aws:iam::123456789012:role/PrefixRole",
+            "*bucket-suffix": "arn:aws:iam::123456789012:role/SuffixRole",
+            "bucket-*pattern*": "arn:aws:iam::123456789012:role/PatternRole",
+            "regex-pattern": "arn:aws:iam::123456789012:role/RegexRole"
+        }
+
+        Supports exact matches, wildcard patterns, and regular expression matching.
+
+        Parameters
+        ----------
+        bucket_name: str
+            Name of the S3 bucket
+
+        Returns
+        -------
+        str or None
+            Role ARN to assume, or None if no role is needed
+        """
+        role_mappings = self.config.get('role_mappings', {})
+
+        # Check for exact bucket match first (fastest)
+        if bucket_name in role_mappings:
+            return role_mappings[bucket_name]
+
+        # Check pattern matches
+        for pattern, role in role_mappings.items():
+            # Skip exact matches (already checked above)
+            if pattern == bucket_name:
+                continue
+
+            # Handle regex patterns
+            if self._is_regex_pattern(pattern):
+                try:
+                    if re.match(pattern, bucket_name):
+                        return role
+                except re.error as ex:
+                    self.logger.warning(f"Invalid regex pattern '{pattern}': {ex}")
+                    continue
+            # Handle simple wildcard patterns
+            elif pattern.endswith('*'):
+                prefix = pattern[:-1]
+                if bucket_name.startswith(prefix):
+                    return role
+            elif pattern.startswith('*'):
+                suffix = pattern[1:]
+                if bucket_name.endswith(suffix):
+                    return role
+            elif '*' in pattern:
+                # Handle complex wildcard patterns
+                if fnmatch.fnmatch(bucket_name, pattern):
+                    return role
+
+        return None
+
+    def _is_regex_pattern(self, pattern):
+        """Check if a pattern is a regex pattern for optimization.
+
+        Parameters
+        ----------
+        pattern: str
+            Pattern to check
+
+        Returns
+        -------
+        bool
+            True if pattern is a regex pattern
+
+        Notes
+        -----
+        Detects regex patterns by checking for common regex indicators:
+        ^, $, (, |, [, \\
+        """
+        # Quick checks for common regex indicators
+        return (pattern.startswith('^') or
+                pattern.endswith('$') or
+                '(' in pattern or
+                '|' in pattern or
+                '[' in pattern or
+                '\\' in pattern)
+
+    def _assume_role(self, role_arn):
+        """Assume an IAM role and return credentials.
+
+        Parameters
+        ----------
+        role_arn: str
+            ARN of the role to assume
+
+        Returns
+        -------
+        dict
+            Credentials dictionary with access_key, secret_key, and token
+
+        Raises
+        ------
+        Exception
+            If role assumption fails
+        """
+        try:
+            sts_client = boto3.client('sts')
+            response = sts_client.assume_role(
+                RoleArn=role_arn,
+                RoleSessionName='ImageGeneratorSession'
+            )
+
+            credentials = response['Credentials']
+            return {
+                'aws_access_key_id': credentials['AccessKeyId'],
+                'aws_secret_access_key': credentials['SecretAccessKey'],
+                'aws_session_token': credentials['SessionToken']
+            }
+        except Exception as ex:
+            self.logger.error(f"Error assuming role {role_arn}: {ex}", exc_info=True)
+            raise
+
     def check_file_exists(self, bucket, key):
         """Check if an s3 file exists
 
@@ -51,11 +173,30 @@ class PostworkflowNormalizer(Process):
         if bucket is None or key is None:
             return False
 
+        role_arn = self._get_role_for_bucket(bucket)
+
         try:
-            s3.Object(bucket, key).load()
+            if role_arn:
+                self.logger.info(f"Assuming role {role_arn} for bucket {bucket}")
+                credentials = self._assume_role(role_arn)
+
+                # Create a new S3 client with assumed role credentials
+                s3_client = boto3.resource(
+                    's3',
+                    aws_access_key_id=credentials['aws_access_key_id'],
+                    aws_secret_access_key=credentials['aws_secret_access_key'],
+                    aws_session_token=credentials['aws_session_token']
+                )
+
+                s3_client.Object(bucket, key).load()
+
+            else:
+                s3.Object(bucket, key).load()
+
         except botocore.exceptions.ClientError as ex:
-            self.logger.error(ex)
+            self.logger.error(f"Error downloading file from S3: {ex}", exc_info=True)
             return False
+
         return True
 
     def process(self):
