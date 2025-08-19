@@ -40,7 +40,7 @@ class PostworkflowNormalizer(Process):
         self.logger = cumulus_logger
 
     def check_file_exists(self, bucket, key):
-        """Check if an s3 file exists
+        """Check if an s3 file exists (supports requester pays)
 
         Returns
         ----------
@@ -52,7 +52,7 @@ class PostworkflowNormalizer(Process):
             return False
 
         try:
-            s3.Object(bucket, key).load()
+            s3.Object(bucket, key).load(RequestPayer="requester")
         except botocore.exceptions.ClientError as ex:
             self.logger.error(ex)
             return False
