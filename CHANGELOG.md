@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 ### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+
+## [0.5.0]
+
+### Added
+- Added in requester pay flag into s3 calls
+### Changed
 - Poetry Update
 - Update versioning in github actions
 ### Deprecated
