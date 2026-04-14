@@ -16,7 +16,7 @@ python = "^3.12"
 cumulus-process = "^1.6.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^9.0.0"
+pytest = "^9.0.3"
 flake8 = "^7.0.0"
 pylint = "^4.0.0"
 moto = "^5.0.7"
