@@ -16,7 +16,7 @@ jobs:
       ${{ startsWith(github.ref, 'refs/heads/release/') }}
     steps:
       # Checks-out the develop branch
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: 'refs/heads/develop'
 
@@ -25,9 +25,9 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: abatilo/actions-poetry@v3
+        uses: abatilo/actions-poetry@v4
         with:
-          poetry-version: 1.8.5
+          poetry-version: 2.3.2
 
       - name: Bump minor version
         run: |
