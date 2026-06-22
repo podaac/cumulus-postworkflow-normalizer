@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 ### Changed
 - Updated to python 3.12
-- Update python libraries for cumulus consolidation
-- Update terraform for cumulus consolidation
+- Updated python libraries for cumulus consolidation
+- Updated terraform for cumulus consolidation
 ### Deprecated
 ### Removed
 ### Fixed
