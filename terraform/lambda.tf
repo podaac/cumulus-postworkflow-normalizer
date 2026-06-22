@@ -4,7 +4,7 @@ resource "aws_lambda_function" "postworkflow_normalizer" {
   source_code_hash = filebase64sha256("${path.module}/postworkflow-normalizer.zip")
   handler       = "cumulus_postworkflow_normalizer.lambda_handler.handler"
   role          = var.lambda_role
-  runtime       = "python3.11"
+  runtime       = "python3.12"
   timeout       = var.timeout
   memory_size   = var.memory_size
 
