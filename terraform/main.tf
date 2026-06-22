@@ -3,7 +3,6 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
     }
-
     null = {
       source  = "hashicorp/null"
     }
