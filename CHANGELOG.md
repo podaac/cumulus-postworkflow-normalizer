@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 ### Changed
+- Updated to python 3.12
+- Update python libraries for cumulus consolidation
+- Update terraform for cumulus consolidation
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+
+## [0.6.0]
+
+### Added
+### Changed
 ### Deprecated
 ### Removed
 ### Fixed
