@@ -9,15 +9,6 @@ terraform {
   }
 }
 
-provider "aws" {
-  region  = var.region
-  profile = var.aws_profile
-
-  ignore_tags {
-    key_prefixes = ["gsfc-ngap"]
-  }
-}
-
 data "aws_caller_identity" "current" {}
 
 locals {
