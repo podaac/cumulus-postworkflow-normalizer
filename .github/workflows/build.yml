@@ -19,6 +19,8 @@ jobs:
     name: Build, Test, Verify, Publish
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.versioning.outputs.new_version }}
     steps:
       #########################################################################
       # Environment Setup
@@ -26,7 +28,7 @@ jobs:
       # NOTE: This step is platform-specific
       # Checks out this repository and sets up the build/test environment with 
       # gradle
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -66,6 +68,7 @@ jobs:
           fi
           
           echo "new_version=${new_version}" >> $GITHUB_ENV
+          echo "new_version=${new_version}" >> $GITHUB_OUTPUT
 
       - name: Override Environment for Deploy Command
         if: contains(github.event.head_commit.message, '/deploy')
@@ -171,35 +174,43 @@ jobs:
           git push origin "${VERSION}"
 
 
-      #########################################################################
-      # Publish release to releases
-      #########################################################################
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*.whl
+
+  release-zip:
+    name: Create Zip Release
+    runs-on: ubuntu-24.04-arm
+    needs: build
+    if: |
+      github.ref == 'refs/heads/develop' ||
+      github.ref == 'refs/heads/main'    ||
+      startsWith(github.ref, 'refs/heads/release') ||
+      github.event.head_commit.message == '/deploy sit' ||
+      github.event.head_commit.message == '/deploy uat' ||
+      github.event.head_commit.message == '/deploy sandbox'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist
+
       - name: Create Zip release
-        if: |
-          github.ref == 'refs/heads/develop' ||
-          github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release') ||
-          github.event.head_commit.message == '/deploy sit' ||
-          github.event.head_commit.message == '/deploy uat' ||
-          github.event.head_commit.message == '/deploy sandbox'      
         run: |
-          poetry run pip install -t package dist/*.whl
+          python -m pip install -t package dist/*.whl
           cd package/; zip -r ../terraform/postworkflow-normalizer.zip . -x '*.pyc'
-          cd ../; cd terraform; zip -r ../postworkflow-normalizer-${{ env.new_version }}.zip *
+          cd ../; cd terraform; zip -r ../postworkflow-normalizer-${{ needs.build.outputs.new_version }}.zip *
 
       - name: Upload Release Artifacts
-        if: |
-          github.ref == 'refs/heads/develop' ||
-          github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release') ||
-          github.event.head_commit.message == '/deploy sit' ||
-          github.event.head_commit.message == '/deploy uat' ||
-          github.event.head_commit.message == '/deploy sandbox'
         uses: ncipollo/release-action@v1.14.0
         with:
-          tag: ${{ env.new_version }}
+          tag: ${{ needs.build.outputs.new_version }}
           artifacts: "*.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
-          body: "Version ${{ env.new_version }}"
+          body: "Version ${{ needs.build.outputs.new_version }}"
           makeLatest: "${{ github.ref == 'refs/heads/main' }}"
           prerelease: "${{ github.ref != 'refs/heads/main' }}"

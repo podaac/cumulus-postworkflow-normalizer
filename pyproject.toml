@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cumulus-postworkflow-normalizer"
-version = "0.6.0"
+version = "0.7.0rc1"
 description = ""
 authors = ["podaac-tva <podaac-tva@jpl.nasa.gov>"]
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ exclude = ['contrib', 'docs', 'tests']
 
 [tool.poetry.dependencies]
 python = "^3.12"
-cumulus-process = "^1.6.0"
+cumulus-process = "^1.7.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^9.0.0"
