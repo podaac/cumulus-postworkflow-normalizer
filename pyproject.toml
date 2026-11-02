@@ -18,7 +18,7 @@ cumulus-process = "^1.7.0"
 [tool.poetry.dev-dependencies]
 pytest = "^9.0.0"
 flake8 = "^7.0.0"
-pylint = "^4.0.0"
+pylint = "^4.0.9"
 moto = "^5.0.7"
 pytest-dotenv = "^0.5.2"
 pytest-cov = "^7.0.0"
